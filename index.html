@@ -15,6 +15,28 @@
   </style>
 </head>
 <body>
+
+  <label>User</label>
+  <input id="input-name" type="text"></input>
+  <button data-action="login" id="login-user">Login</button>
+
+  <fieldset>
+      <legend>Select Book List</legend>
+
+      <div>
+          <input type="radio" id="all-books" name="books-filter" checked />
+          <label for="all-books">All Books</label>
+      </div>
+
+      <div>
+          <input type="radio" id="my-books" name="books-filter" />
+          <label for="my-books">My Books</label>
+      </div>
+
+  </fieldset>
+
+
+
   <div class='row'>
 
     <div id="sidebar" class='col-md-4'>

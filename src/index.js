@@ -1,43 +1,52 @@
 const BOOK_URL = "http://localhost:3000/api/v1/books/"
+const USER_URL = "http://localhost:3000/api/v1/users/"
 
 var mainHTML            = document.getElementById("container")
 var bookSidebarHTML     = document.getElementById("sidebar")
 var bookDetailHTML      = document.getElementById("book-detail")
-var booksObj;
+var booksList;
+var usersList;
 
 getBooksFromApi();
+getUsersFromApi();
 
 function getBooksFromApi() {
-fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
+  fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
+}
 
+function getUsersFromApi() {
+  fetch(USER_URL).then(r => r.json()).then(u => pushUsers(u))
+}
+
+function pushUsers(users) {
+    usersList = users;
+  console.log(usersList)
 }
 
 function pushBooks(books) {
-booksObj = books;
-bookSidebarHTML.innerHTML = ""
-
-displaySideBooks();
+  booksList = books;
+  bookSidebarHTML.innerHTML = ""
 }
 
-function addBookToDatabase(bookID, content) {
- return fetch(`${BOOK_URL}/${bookID}`, {
-  method: "PATCH",
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  },
-  body: JSON.stringify({
-    'content': content
+function addUserToDatabase(name) {
+  return fetch(`${USER_URL}`, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      'name': name
+    })
   })
-})
 }
 
 function displaySideBooks() {
 
-booksObj.forEach(book => {
+booksList.forEach(book => {
     bookSidebarHTML.innerHTML +=
       `<ul class="list-group">
-      <li data-action="${book.id}" class="list-group-item">${book.title}</li>
+      <li data-item="book title" data-action="${book.id}" class="list-group-item">${book.title}</li>
       </ul>
     </div>`
 })
@@ -54,34 +63,75 @@ bookDetailHTML.innerHTML =
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.body.addEventListener('click', function(event) {
 
-
-document.body.addEventListener('click', function(event) {
-
-  booksObj.forEach(function(b) {
-    if (event.target.dataset.action === `${b.id}`) {
-
-        displayMainBook(b);
+    if (event.target.dataset.item === "book title") {
+      booksList.forEach(function(b) {
+        if (event.target.dataset.action === `${b.id}`) {
+            displayMainBook(b);
+        }
+      })
     }
-  })
 
-    if (event.target.dataset.action === "save") {
-      var editField           = document.getElementById("edit-field");
-      var editFieldValue      = editField.value
-      var bookId              = parseInt(event.target.dataset.index)
+    else if (event.target.id === "login-user") {
 
-        addBookToDatabase(bookId, editFieldValue).then( ()=>getBooksFromApi() );
+      event.preventDefault()
+      var loginField = document.getElementById("input-name")
+      var loginFieldValue = loginField.value
 
-          if (!addBookToDatabase.error) {
-              bookDetailHTML.innerHTML    = " BEER DESCRIPTION SAVED!"
-          } else {
-              bookDetailHTML.innerHTML    = "OOPS SOMETHING WENT WRONG..."
-          }
-
-            // fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
-            // console.log(booksObj)
-            // displaySideBooks();
-
+      var user = usersList.find(n => n.name === loginFieldValue)
+      if (!user) {
+        addUserToDatabase(loginFieldValue).then(() => getUsersFromApi())
+        console.log(usersList)
+      }
+      displaySideBooks();
     }
+
+    else if (event.target.id === "my-books") {
+      event.preventDefault()
+      console.log("My Books")
+      debugger
+    }
+
+    else if (event.target.id === "all-books") {
+      event.preventDefault()
+      console.log("All Books")
+      debugger
+    }
+
+
   })
 })
+
+
+// else if (event.target.dataset.action === "save") {
+//   var editField           = document.getElementById("edit-field");
+//   var editFieldValue      = editField.value
+//   var bookId              = parseInt(event.target.dataset.index)
+//
+//   addBookToDatabase(bookId, editFieldValue).then( ()=>getBooksFromApi() );
+//
+//     if (!addBookToDatabase.error) {
+//         bookDetailHTML.innerHTML    = " BEER DESCRIPTION SAVED!"
+//     } else {
+//         bookDetailHTML.innerHTML    = "OOPS SOMETHING WENT WRONG..."
+//     }
+//
+//       // fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
+//       // console.log(booksList)
+//       // displaySideBooks();
+//
+// }
+
+// function addBookToDatabase(bookID, content) {
+//  return fetch(`${BOOK_URL}/${bookID}`, {
+//   method: "PATCH",
+//   headers: {
+//     'Content-Type': 'application/json',
+//     'Accept': 'application/json'
+//   },
+//   body: JSON.stringify({
+//     'content': content
+//   })
+// })
+// }
