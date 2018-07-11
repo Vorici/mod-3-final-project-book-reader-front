@@ -1,11 +1,15 @@
 const BOOK_URL = "http://localhost:3000/api/v1/books/"
 const USER_URL = "http://localhost:3000/api/v1/users/"
 
+const ADMIN_USER_NAME = 'Admin'
 var mainHTML            = document.getElementById("container")
 var bookSidebarHTML     = document.getElementById("sidebar")
 var bookDetailHTML      = document.getElementById("book-detail")
 var booksList;
 var usersList;
+var adminUserId;
+var currentUserId;
+var booksListFilter;
 
 getBooksFromApi();
 getUsersFromApi();
@@ -15,12 +19,16 @@ function getBooksFromApi() {
 }
 
 function getUsersFromApi() {
-  fetch(USER_URL).then(r => r.json()).then(u => pushUsers(u))
+  fetch(USER_URL).then(r => r.json()).then(u =>
+    {
+      pushUsers(u);
+      adminUserId = usersList.find(user => (user.name === ADMIN_USER_NAME)).id
+    })
 }
 
 function pushUsers(users) {
     usersList = users;
-  console.log(usersList)
+  // console.log(usersList)
 }
 
 function pushBooks(books) {
@@ -41,15 +49,18 @@ function addUserToDatabase(name) {
   })
 }
 
-function displaySideBooks() {
-
-booksList.forEach(book => {
-    bookSidebarHTML.innerHTML +=
-      `<ul class="list-group">
-      <li data-item="book title" data-action="${book.id}" class="list-group-item">${book.title}</li>
-      </ul>
-    </div>`
-})
+function displaySideBooks(userId) {
+  bookSidebarHTML.innerHTML = ""
+  booksList.forEach(book => {
+      if ( (book.user.id === userId && booksListFilter === "My Books")
+            || booksListFilter === "All Books"  ) {
+        bookSidebarHTML.innerHTML +=
+          `<ul class="list-group">
+          <li data-item="book title" data-action="${book.id}" class="list-group-item">${book.title}</li>
+          </ul>
+        </div>`
+      }
+  })
 }
 
 function displayMainBook(book){
@@ -80,58 +91,37 @@ document.addEventListener('DOMContentLoaded', () => {
       var loginFieldValue = loginField.value
 
       var user = usersList.find(n => n.name === loginFieldValue)
+
       if (!user) {
-        addUserToDatabase(loginFieldValue).then(() => getUsersFromApi())
-        console.log(usersList)
+        addUserToDatabase(loginFieldValue).then(() => {
+          fetch(USER_URL).then(r => r.json()).then(u => {
+            console.log(u)
+            debugger
+            currentUserId = usersList[usersList.length-1].id
+  //          authenticateGoogleDrive(currentUserId)
+            booksListFilter = "All Books"
+            displaySideBooks(adminUserId);
+          })
+        })
       }
-      displaySideBooks();
+      else {
+        currentUserId = user.id
+        booksListFilter = "My Books"
+        displaySideBooks(currentUserId);
+      }
     }
 
     else if (event.target.id === "my-books") {
       event.preventDefault()
       console.log("My Books")
-      debugger
+      booksListFilter = "My Books"
     }
 
     else if (event.target.id === "all-books") {
       event.preventDefault()
       console.log("All Books")
-      debugger
+      booksListFilter = "All Books"
     }
-
 
   })
 })
-
-
-// else if (event.target.dataset.action === "save") {
-//   var editField           = document.getElementById("edit-field");
-//   var editFieldValue      = editField.value
-//   var bookId              = parseInt(event.target.dataset.index)
-//
-//   addBookToDatabase(bookId, editFieldValue).then( ()=>getBooksFromApi() );
-//
-//     if (!addBookToDatabase.error) {
-//         bookDetailHTML.innerHTML    = " BEER DESCRIPTION SAVED!"
-//     } else {
-//         bookDetailHTML.innerHTML    = "OOPS SOMETHING WENT WRONG..."
-//     }
-//
-//       // fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
-//       // console.log(booksList)
-//       // displaySideBooks();
-//
-// }
-
-// function addBookToDatabase(bookID, content) {
-//  return fetch(`${BOOK_URL}/${bookID}`, {
-//   method: "PATCH",
-//   headers: {
-//     'Content-Type': 'application/json',
-//     'Accept': 'application/json'
-//   },
-//   body: JSON.stringify({
-//     'content': content
-//   })
-// })
-// }
