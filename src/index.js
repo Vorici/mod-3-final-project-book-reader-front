@@ -1,15 +1,24 @@
 const BOOK_URL = "http://localhost:3000/api/v1/books/"
 const USER_URL = "http://localhost:3000/api/v1/users/"
+const PAGE_URL = "http://localhost:3000/api/v1/pages/"
+const GOOGLE_DRIVE_URL = "https://drive.google.com/uc?export=view&id="
 
-const ADMIN_USER_NAME = 'Admin'
-var mainHTML            = document.getElementById("container")
-var bookSidebarHTML     = document.getElementById("sidebar")
-var bookDetailHTML      = document.getElementById("book-detail")
+const ADMIN_USER_NAME = 'Admin';
+
+const mainHTML            = document.getElementById("container");
+const bookSidebarHTML     = document.getElementById("sidebar");
+const bookPageHTML      = document.getElementById("book-page");
+const myBooksBtn          = document.getElementById("my-books");
+const allBooksBtn          = document.getElementById("all-books");
+const loginSearchFields = document.getElementById("login-search-fields")
+
 var booksList;
 var usersList;
 var adminUserId;
 var currentUserId;
 var booksListFilter;
+const pagesList = [];
+let currentPageIndex;
 
 getBooksFromApi();
 getUsersFromApi();
@@ -63,15 +72,23 @@ function displaySideBooks(userId) {
   })
 }
 
-function displayMainBook(book){
-bookDetailHTML.innerHTML =
-  ` <h1>${book.title}</h1>
-    <h4>${book.author}</h4>
-    <textarea id="edit-field" data-index="${book.id}">${book.content}</textarea>
-      <button data-action="save" data-index="${book.id}" id="edit-book" class="btn btn-info">
-        Save
-      </button>`
+function displayPage() {
+  bookPageHTML.innerHTML = `<img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">`
 }
+
+function getPagesFromApi(book_id) {
+  fetch(BOOK_URL + book_id).then(r => r.json()).then(p => {
+    if (pagesList.length) {
+      pagesList.length = 0
+    }
+    p.forEach(page => {
+      pagesList.push(page)
+    })
+    currentPageIndex = 0
+    displayPage()
+  })
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
   document.body.addEventListener('click', function(event) {
@@ -79,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.target.dataset.item === "book title") {
       booksList.forEach(function(b) {
         if (event.target.dataset.action === `${b.id}`) {
-            displayMainBook(b);
+            getPagesFromApi(b.id);
         }
       })
     }
@@ -98,9 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(u)
             debugger
             currentUserId = usersList[usersList.length-1].id
-  //          authenticateGoogleDrive(currentUserId)
-            booksListFilter = "All Books"
-            displaySideBooks(adminUserId);
+            fetch(USER_URL)
+              booksListFilter = "All Books"
+              displaySideBooks(adminUserId);
+              myBooksBtn.checked = false;
+              allBooksBtn.checked = true;
+
           })
         })
       }
@@ -108,20 +128,41 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserId = user.id
         booksListFilter = "My Books"
         displaySideBooks(currentUserId);
+        myBooksBtn.checked = true;
+        allBooksBtn.checked = false;
+
       }
+
+      loginSearchFields.innerHTML = `
+          <label>Search</label>
+          <input id="input-search" type="text"></input>
+          `
+      loginSearchFields.addEventListener('keyup', event => {
+        if (event.target.id === "input-search") {
+          
+        }
+      })
+
     }
 
     else if (event.target.id === "my-books") {
-      event.preventDefault()
+//      event.preventDefault()
       console.log("My Books")
       booksListFilter = "My Books"
+      displaySideBooks(currentUserId);
+      myBooksBtn.checked = true;
+      allBooksBtn.checked = false;
     }
 
     else if (event.target.id === "all-books") {
-      event.preventDefault()
+//      event.preventDefault()
       console.log("All Books")
       booksListFilter = "All Books"
+      displaySideBooks(currentUserId);
+      myBooksBtn.checked = false;
+      allBooksBtn.checked = true;
     }
 
   })
+
 })

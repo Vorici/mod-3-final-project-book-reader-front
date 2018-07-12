@@ -16,15 +16,17 @@
 </head>
 <body>
 
-  <label>User</label>
-  <input id="input-name" type="text"></input>
-  <button data-action="login" id="login-user">Login</button>
+  <div id="login-search-fields">
+    <label>User</label>
+    <input id="input-name" type="text"></input>
+    <button data-action="login" id="login-user">Login</button>
+  </div>
 
   <fieldset>
-      <legend>Select Book List</legend>
+      <label>Select Book List</label>
 
       <div>
-          <input type="radio" id="all-books" name="books-filter" checked />
+          <input type="radio" id="all-books" name="books-filter" />
           <label for="all-books">All Books</label>
       </div>
 
@@ -35,8 +37,6 @@
 
   </fieldset>
 
-
-
   <div class='row'>
 
     <div id="sidebar" class='col-md-4'>
@@ -45,8 +45,7 @@
     </div>
 
     <div class='col-md-8'>
-      <h2>Book Reader</h2>
-      <div id="book-detail">
+      <div id="book-page">
       </div>
     </div>
   </div>
