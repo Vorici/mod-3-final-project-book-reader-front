@@ -19,6 +19,10 @@ var currentUserId;
 var booksListFilter;
 const pagesList = [];
 let currentPageIndex;
+let booksListSearchValue;
+let titlesCount;
+let currentBookId;
+let currentBook;
 
 getBooksFromApi();
 getUsersFromApi();
@@ -59,21 +63,53 @@ function addUserToDatabase(name) {
 }
 
 function displaySideBooks(userId) {
-  bookSidebarHTML.innerHTML = ""
+  titlesCount = 0
+  bookSidebarHTML.innerHTML = `<h3 id="titles-count">Titles (${titlesCount} listed)</h3>`
   booksList.forEach(book => {
-      if ( (book.user.id === userId && booksListFilter === "My Books")
-            || booksListFilter === "All Books"  ) {
+    if ( (book.user.id === userId && booksListFilter === "My Books")
+          || booksListFilter === "All Books"  ) {
+      if (booksListSearchValue) {
+        let titleUpperCase = book.title.toUpperCase()
+        if (titleUpperCase.includes(booksListSearchValue.toUpperCase())) {
+          titlesCount++
+          bookSidebarHTML.innerHTML +=
+            `<ul class="list-group">
+            <li data-item="book title" data-id="${book.id}" class="list-group-item">${book.title}</li>
+            </ul>
+          </div>`
+        }
+      }
+      else {
+        titlesCount++
         bookSidebarHTML.innerHTML +=
           `<ul class="list-group">
-          <li data-item="book title" data-action="${book.id}" class="list-group-item">${book.title}</li>
+          <li data-item="book title" data-id="${book.id}" class="list-group-item">${book.title}</li>
           </ul>
         </div>`
       }
+    }
   })
+  const titlesCountElement = document.getElementById("titles-count")
+  titlesCountElement.innerText = `Titles (${titlesCount} listed)`
+
 }
 
 function displayPage() {
-  bookPageHTML.innerHTML = `<img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">`
+  bookPageHTML.innerHTML = `
+    <button data-action="first">First</button>
+    <button data-action="previous">Previous</button>
+    <button data-action="next">Next</button>
+    <button data-action="last">Last</button>`
+
+    if (currentBook.user.id === currentUserId) {
+        bookPageHTML.innerHTML += `<button data-action="drop-book">Remove from My Books</button>`
+    }
+    else {
+      bookPageHTML.innerHTML += `<button data-action="add-book">Add to My Books</button>`
+    }
+
+    bookPageHTML.innerHTML += `<br><img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">`
+
 }
 
 function getPagesFromApi(book_id) {
@@ -94,11 +130,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.addEventListener('click', function(event) {
 
     if (event.target.dataset.item === "book title") {
-      booksList.forEach(function(b) {
-        if (event.target.dataset.action === `${b.id}`) {
-            getPagesFromApi(b.id);
-        }
-      })
+      currentBookId = parseInt(event.target.dataset.id)
+      currentBook = booksList.find(book => (book.id === currentBookId))
+      getPagesFromApi(currentBookId)
+      // booksList.forEach(function(b) {
+      //   if (event.target.dataset.action === `${b.id}`) {
+      //       getPagesFromApi(b.id);
+      //   }
+      // })
     }
 
     else if (event.target.id === "login-user") {
@@ -113,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
         addUserToDatabase(loginFieldValue).then(() => {
           fetch(USER_URL).then(r => r.json()).then(u => {
             console.log(u)
-            debugger
             currentUserId = usersList[usersList.length-1].id
             fetch(USER_URL)
               booksListFilter = "All Books"
@@ -139,15 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
           `
       loginSearchFields.addEventListener('keyup', event => {
         if (event.target.id === "input-search") {
-          
+          booksListSearchValue = document.getElementById("input-search").value
+          displaySideBooks(currentUserId);
         }
       })
 
     }
 
     else if (event.target.id === "my-books") {
-//      event.preventDefault()
-      console.log("My Books")
       booksListFilter = "My Books"
       displaySideBooks(currentUserId);
       myBooksBtn.checked = true;
@@ -155,12 +192,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     else if (event.target.id === "all-books") {
-//      event.preventDefault()
-      console.log("All Books")
       booksListFilter = "All Books"
       displaySideBooks(currentUserId);
       myBooksBtn.checked = false;
       allBooksBtn.checked = true;
+    }
+
+    else if (event.target.dataset.action === 'first') {
+      currentPageIndex = 0
+      displayPage()
+    }
+
+    else if (event.target.dataset.action === 'next') {
+      if (currentPageIndex < pagesList.length - 1) {
+        ++currentPageIndex
+        displayPage()
+      }
+    }
+
+    else if (event.target.dataset.action === 'previous') {
+      if (currentPageIndex) {
+        --currentPageIndex
+        displayPage()
+      }
+    }
+
+    else if (event.target.dataset.action === 'last') {
+      currentPageIndex = pagesList.length - 1
+      displayPage()
     }
 
   })
