@@ -57,8 +57,8 @@ function getUsersFromApi() {
 function displayLoginPage() {
   document.body.style.backgroundImage = "url('https://i.imgur.com/mekOinl.jpg')";
   bookSidebarHTML.innerHTML = `<div class="w3-container">
-    <h1>Lib.hub</h1>
-    <h4>Share, Borrow, Return</h4>
+    <h1><font color="white">Lib.hub</font></h1>
+    <h4><font color="white">Share, Borrow, Return</font></h4>
     <button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-green w3-large">Login</button>
 
     <div id="id01" class="w3-modal">
@@ -66,7 +66,7 @@ function displayLoginPage() {
 
         <div class="w3-center"><br>
           <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
-          <img src="https://cdn.pixabay.com/photo/2016/03/31/19/58/avatar-1295429_960_720.png" alt="Avatar" style="width:30%" class="w3-circle w3-margin-top">
+          <img src="https://www.shareicon.net/data/256x256/2016/07/31/804508_book_512x512.png" alt="Avatar" style="width:40%" class="w3-circle w3-margin-top">
         </div>
           <div id="login-section" class="w3-section">
             <label><b>Name</b></label>
@@ -195,7 +195,7 @@ function displayPage() {
           <button data-action="last" class="ui button">
             <i class="fast forward icon"></i>
           </button>
-          <button class="negative ui button">Return</button>
+          <button data-action="drop-book" class="negative ui button">Return</button>
         </div>
         <div>
           <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
@@ -219,7 +219,7 @@ function displayPage() {
           <button data-action="last" class="ui button">
             <i class="fast forward icon"></i>
           </button>
-          <button class="positive ui button">Borrow</button>
+          <button data-action="add-book" class="positive ui button">Borrow</button>
         </div>
         <div>
           <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
@@ -365,15 +365,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     else if (event.target.dataset.action === 'drop-book') {
       // need to persist this
+      debugger
       currentBook.user.id = adminUserId
       updateBookUser(currentBook.user.id)
+      displaySideBooks(currentUserId);
+      bookPageHTML.innerHTML = "<h2>Your Book Has Been Returned! Thank You For Reading!</h2>"
+      currentBookId = null;
+      currentBook = null;
     }
-
 
     else if (event.target.dataset.action === 'add-book') {
       // need to persist this
+      debugger
       currentBook.user.id = currentUserId
       updateBookUser(currentBook.user.id)
+      displaySideBooks(currentUserId);
+      displayPage();
     }
 
   })
