@@ -3,22 +3,21 @@ const USER_URL          = "http://localhost:3000/api/v1/users/"
 const PAGE_URL          = "http://localhost:3000/api/v1/pages/"
 const GOOGLE_DRIVE_URL  = "https://drive.google.com/uc?export=view&id="
 
-const ADMIN_USER_NAME   = 'Admin';
+const ADMIN_USER_NAME     = 'Admin';
 
-const pagesList = [];
-const mainHTML          = document.getElementById("container");
-const bookSidebarHTML   = document.getElementById("sidebar");
-const bookPageHTML      = document.getElementById("book-page");
-
+const mainHTML            = document.getElementById("container");
+const bookSidebarHTML     = document.getElementById("sidebar");
+const bookPageHTML        = document.getElementById("book-page");
 let myBooksBtn;
 let allBooksBtn;
 let searchField;
 
-let booksList;
-let usersList;
-let adminUserId;
-let currentUserId;
-let booksListFilter;
+let booksList = [];
+let usersList = [];
+let pagesList = [];
+var adminUserId;
+var currentUserId;
+var booksListFilter;
 
 let currentPageIndex;
 let booksListSearchValue;
@@ -28,38 +27,47 @@ let currentBook;
 
 getBooksFromApi();
 getUsersFromApi();
+displayLoginPage();
 
 function getBooksFromApi() {
-  fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
-}
-
-function getUsersFromApi() {
-  fetch(USER_URL).then(r => r.json()).then(u =>
+  if (booksList.length) {
+    booksList.length = 0
+  }
+  fetch(BOOK_URL).then(r => r.json()).then(b =>
     {
-      pushUsers(u);
-      adminUserId = usersList.find(user => (user.name === ADMIN_USER_NAME)).id
+      b.forEach(book => { booksList.push(book) })
     })
 }
 
-function pushUsers(users) {
-    usersList = users;
-  // console.log(usersList)
+function getUsersFromApi() {
+  if (usersList.length) {
+    usersList.length = 0
+  }
+  fetch(USER_URL).then(r => r.json()).then(u =>
+    {
+      u.forEach(user => {
+        usersList.push(user)
+        if (user.name === ADMIN_USER_NAME) {
+            adminUserId = user.id
+        }
+      })
+    })
 }
 
-function pushBooks(books) {
-  booksList = books;
+function displayLoginPage() {
+  document.body.style.backgroundImage = "url('https://i.imgur.com/mekOinl.jpg')";
   bookSidebarHTML.innerHTML = `<div class="w3-container">
-    <h2>Book Reader</h2>
-    <button onclick="document.getElementById('modal').style.display='block'" class="w3-button w3-green w3-large">Login</button>
+    <h1>Lib.hub</h1>
+    <h4>Share, Borrow, Return</h4>
+    <button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-green w3-large">Login</button>
 
-    <div id="modal" class="w3-modal">
+    <div id="id01" class="w3-modal">
       <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
 
         <div class="w3-center"><br>
-          <span onclick="document.getElementById('modal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+          <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
           <img src="https://cdn.pixabay.com/photo/2016/03/31/19/58/avatar-1295429_960_720.png" alt="Avatar" style="width:30%" class="w3-circle w3-margin-top">
         </div>
-
           <div id="login-section" class="w3-section">
             <label><b>Name</b></label>
             <input id="input-name" class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter Your Name" name="usrname" required>
@@ -67,7 +75,9 @@ function pushBooks(books) {
           </div>
 
         <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
-          <button onclick="document.getElementById('modal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+
+          <button onclick="document.getElementById('id01').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+
                 <span class="w3-right w3-padding w3-hide-small">Please provide a login name. We will automatically create an account for you if you do not have one! </span>
         </div>
 
@@ -91,16 +101,12 @@ function addUserToDatabase(name) {
 
 function displaySideBooks(userId) {
   titlesCount = 0
+
   bookSidebarHTML.innerHTML = `</br><h3 id="titles-count">Titles (${titlesCount} listed)</h3>
-
       <label>Select Book List</label>
-
       <div>
           <input class="ui toggle checkbox" type="radio" id="all-books" name="books-filter" />
-          <label for="all-books">All Books</label>
-      </div>
-
-      <div>
+          <label for="all-books">All Books</label></br>
           <input class="ui toggle checkbox" type="radio" id="my-books" name="books-filter" />
           <label for="my-books">My Books</label>
       </div></br>`
@@ -134,10 +140,10 @@ function displaySideBooks(userId) {
 
   myBooksBtn   = document.getElementById("my-books");
   allBooksBtn  = document.getElementById("all-books");
-  searchField  = document.getElementById("search-field")
+
 }
 function persistBody(){
-  return document.body.innerHTML =  `<body>
+  return document.body.innerHTML =`<body>
     <div class="container">
     <div class="ui icon input"id="search-field">
       <!-- <label>User</label>
@@ -166,45 +172,69 @@ function persistBody(){
   </body>`
 }
 function displayPage() {
+
   // bookPageHTML.innerHTML = `
   //   <button data-action="first">First</button>
   //   <button data-action="last">Last</button>`
 
     if (currentBook.user.id === currentUserId) {
       bookPageHTML.innerHTML = `
-      <div data-action="drop-book" class="ui top attached button" tabindex="0">Remove Book</div>
-        <div class="ui attached segment">
-        <button data-action="previous" class="ui left attached button">Previous</button>
-          <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
-        <button data-action="next" class="right attached ui button">Next</button>
+      <div>
+        <button data-action="first" class="ui button">
+          <i class="fast backward icon"></i>
+        </button>
+        <button data-action="previous" class="ui left labeled icon button">
+          <i class="left arrow icon"></i>
+            Back
+        </button>
+          <button data-action="next" class="ui right labeled icon button">
+            <i class="right arrow icon"></i>
+              <i class="right arrow icon"></i>
+              Next
+            </button>
+          <button data-action="last" class="ui button">
+            <i class="fast forward icon"></i>
+          </button>
+          <button class="negative ui button">Return</button>
         </div>
-    `
-    }
-
-
-
-
-    else {
+        <div>
+          <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
+          </div>`
+    }  else  {
       // bookPageHTML.innerHTML += `<button data-action="add-book">Add to My Books</button>`
       bookPageHTML.innerHTML = `
-
-
-      <div data-action="add-book" class="ui top attached button" tabindex="0">Add Book</div>
-        <div class="ui attached segment">
-        <button data-action="previous" class="ui left attached button">Previous</button>
-          <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
-        <button data-action="next" class="right attached ui button">Next</button>
+      <div>
+        <button data-action="first" class="ui button">
+          <i class="fast backward icon"></i>
+        </button>
+        <button data-action="previous" class="ui left labeled icon button">
+          <i class="left arrow icon"></i>
+            Back
+        </button>
+          <button data-action="next" class="ui right labeled icon button">
+            <i class="right arrow icon"></i>
+              <i class="right arrow icon"></i>
+              Next
+            </button>
+          <button data-action="last" class="ui button">
+            <i class="fast forward icon"></i>
+          </button>
+          <button class="positive ui button">Borrow</button>
         </div>
-
-      `
-
-
-    }
+        <div>
+          <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
+          </div>`
+      }
+  }
 
     // bookPageHTML.innerHTML += `<button data-action="previous" class="ui left attached button">Previous</button>
     //   <img src="${ GOOGLE_DRIVE_URL + pagesList[currentPageIndex].file_id }">
     //   <button data-action="next" class="right attached ui button">Next</button>`
 
+
+
+function displayNoPagesFound() {
+  bookPageHTML.innerHTML = `<h3>Sorry, there are no paqes for that title</h3>`
 }
 
 function getPagesFromApi(book_id) {
@@ -231,17 +261,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.target.dataset.item === "book title") {
       currentBookId = parseInt(event.target.dataset.id)
       currentBook = booksList.find(book => (book.id === currentBookId))
-      getPagesFromApi(currentBookId)
-      // booksList.forEach(function(b) {
-      //   if (event.target.dataset.action === `${b.id}`) {
-      //       getPagesFromApi(b.id);
-      //   }
-      // })
+
+      if (currentBook.api_image_count) {
+        getPagesFromApi(currentBookId)
+      }
+      else {
+        displayNoPagesFound()
+      }
     }
 
     else if (event.target.dataset.action === "login") {
-
+      document.body.style.backgroundImage = "";
+      bookPageHTML.innerHTML =
+                     `<h2 class="ui header">
+                      <img class="ui image" src="https://freeiconshop.com/wp-content/uploads/edd/book-open-flat.png">
+                      <div class="content">
+                          Welcome to Greg & Ledio's Library. </br>
+                          You may borrow any book you please!
+                          Please don't forget to return them.
+                      </div>
+                    </h2>`
       event.preventDefault()
+
 
       let loginField = document.getElementById("input-name")
       let loginFieldValue = loginField.value
@@ -270,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allBooksBtn.checked = false;
 
       }
-
+      searchField  = document.getElementById("search-field")
       searchField.innerHTML = `
           <input id="input-search" type="text" placeholder="Search..."></input>
           <i class="inverted circular search link icon"></i>
@@ -322,6 +363,36 @@ document.addEventListener('DOMContentLoaded', () => {
       displayPage()
     }
 
-  })
+    else if (event.target.dataset.action === 'drop-book') {
+      // need to persist this
+      currentBook.user.id = adminUserId
+      updateBookUser(currentBook.user.id)
+    }
 
+
+    else if (event.target.dataset.action === 'add-book') {
+      // need to persist this
+      currentBook.user.id = currentUserId
+      updateBookUser(currentBook.user.id)
+    }
+
+  })
 })
+
+function updateBookUser(userId) {
+
+  const detailURL = BOOK_URL + '/' + currentBookId
+
+  configObj = {
+    method: "PATCH",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({user_id: userId })
+  }
+
+  fetch(detailURL, configObj).then(r => r.json()).then(patchResult => {
+    console.log(patchResult)
+  })
+}
