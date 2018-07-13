@@ -8,12 +8,12 @@ const ADMIN_USER_NAME = 'Admin';
 const mainHTML            = document.getElementById("container");
 const bookSidebarHTML     = document.getElementById("sidebar");
 const bookPageHTML      = document.getElementById("book-page");
-const myBooksBtn          = document.getElementById("my-books");
-const allBooksBtn          = document.getElementById("all-books");
-const loginSearchFields = document.getElementById("login-search-fields")
+let myBooksBtn;
+let allBooksBtn;
+let searchField;
 
-var booksList;
-var usersList;
+let booksList = [];
+let usersList = [];
 var adminUserId;
 var currentUserId;
 var booksListFilter;
@@ -26,27 +26,60 @@ let currentBook;
 
 getBooksFromApi();
 getUsersFromApi();
+displayLoginPage();
 
 function getBooksFromApi() {
-  fetch(BOOK_URL).then(r => r.json()).then(b => pushBooks(b))
-}
-
-function getUsersFromApi() {
-  fetch(USER_URL).then(r => r.json()).then(u =>
+  if (booksList.length) {
+    booksList.length = 0
+  }
+  fetch(BOOK_URL).then(r => r.json()).then(b =>
     {
-      pushUsers(u);
-      adminUserId = usersList.find(user => (user.name === ADMIN_USER_NAME)).id
+      b.forEach(book => { booksList.push(book) })
     })
 }
 
-function pushUsers(users) {
-    usersList = users;
-  // console.log(usersList)
+function getUsersFromApi() {
+  if (usersList.length) {
+    usersList.length = 0
+  }
+  fetch(USER_URL).then(r => r.json()).then(u =>
+    {
+      u.forEach(user => {
+        usersList.push(user)
+        if (user.name === ADMIN_USER_NAME) {
+            adminUserId = user.id
+        }
+      })
+    })
 }
 
-function pushBooks(books) {
-  booksList = books;
-  bookSidebarHTML.innerHTML = ""
+function displayLoginPage() {
+  bookSidebarHTML.innerHTML = `<div class="w3-container">
+    <h2>Book Reader</h2>
+    <button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-green w3-large">Login</button>
+
+    <div id="id01" class="w3-modal">
+      <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+
+        <div class="w3-center"><br>
+          <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+          <img src="https://cdn.pixabay.com/photo/2016/03/31/19/58/avatar-1295429_960_720.png" alt="Avatar" style="width:30%" class="w3-circle w3-margin-top">
+        </div>
+
+          <div id="login-section" class="w3-section">
+            <label><b>Name</b></label>
+            <input id="input-name" class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter Your Name" name="usrname" required>
+          <button data-action="login" class="w3-btn w3-block w3-teal">Enter</button>
+          </div>
+
+        <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+          <button onclick="document.getElementById('id01').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                <span class="w3-right w3-padding w3-hide-small">Please provide a login name. We will automatically create an account for you if you do not have one! </span>
+        </div>
+
+      </div>
+    </div>
+  </div>`
 }
 
 function addUserToDatabase(name) {
@@ -64,7 +97,21 @@ function addUserToDatabase(name) {
 
 function displaySideBooks(userId) {
   titlesCount = 0
-  bookSidebarHTML.innerHTML = `<h3 id="titles-count">Titles (${titlesCount} listed)</h3>`
+  bookSidebarHTML.innerHTML = `<h3 id="titles-count">Titles (${titlesCount} listed)</h3>
+  <fieldset>
+      <label>Select Book List</label>
+
+      <div>
+          <input type="radio" id="all-books" name="books-filter" />
+          <label for="all-books">All Books</label>
+      </div>
+
+      <div>
+          <input type="radio" id="my-books" name="books-filter" />
+          <label for="my-books">My Books</label>
+      </div>
+
+  </fieldset>`
   booksList.forEach(book => {
     if ( (book.user.id === userId && booksListFilter === "My Books")
           || booksListFilter === "All Books"  ) {
@@ -92,6 +139,10 @@ function displaySideBooks(userId) {
   const titlesCountElement = document.getElementById("titles-count")
   titlesCountElement.innerText = `Titles (${titlesCount} listed)`
 
+  myBooksBtn = document.getElementById("my-books");
+  allBooksBtn = document.getElementById("all-books");
+  searchField = document.getElementById("search-field")
+
 }
 
 function displayPage() {
@@ -112,6 +163,10 @@ function displayPage() {
 
 }
 
+function displayNoPagesFound() {
+  bookPageHTML.innerHTML = `<h3>Sorry, there are no paqes for that title</h3>`
+}
+
 function getPagesFromApi(book_id) {
   fetch(BOOK_URL + book_id).then(r => r.json()).then(p => {
     if (pagesList.length) {
@@ -125,6 +180,9 @@ function getPagesFromApi(book_id) {
   })
 }
 
+/*
+*******EVENT LOGIC**************************
+*/
 
 document.addEventListener('DOMContentLoaded', () => {
   document.body.addEventListener('click', function(event) {
@@ -132,15 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.target.dataset.item === "book title") {
       currentBookId = parseInt(event.target.dataset.id)
       currentBook = booksList.find(book => (book.id === currentBookId))
-      getPagesFromApi(currentBookId)
-      // booksList.forEach(function(b) {
-      //   if (event.target.dataset.action === `${b.id}`) {
-      //       getPagesFromApi(b.id);
-      //   }
-      // })
+      if (currentBook.api_image_count) {
+        getPagesFromApi(currentBookId)
+      }
+      else {
+        displayNoPagesFound()
+      }
     }
 
-    else if (event.target.id === "login-user") {
+    else if (event.target.dataset.action === "login") {
 
       event.preventDefault()
       var loginField = document.getElementById("input-name")
@@ -171,11 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       }
 
-      loginSearchFields.innerHTML = `
+      searchField.innerHTML = `
           <label>Search</label>
           <input id="input-search" type="text"></input>
           `
-      loginSearchFields.addEventListener('keyup', event => {
+      searchField.addEventListener('keyup', event => {
         if (event.target.id === "input-search") {
           booksListSearchValue = document.getElementById("input-search").value
           displaySideBooks(currentUserId);
@@ -222,6 +280,35 @@ document.addEventListener('DOMContentLoaded', () => {
       displayPage()
     }
 
-  })
+    else if (event.target.dataset.action === 'drop-book') {
+      // need to persist this
+      currentBook.user.id = adminUserId
+      updateBookUser(currentBook.user.id)
+    }
 
+    else if (event.target.dataset.action === 'add-book') {
+      // need to persist this
+      currentBook.user.id = currentUserId
+      updateBookUser(currentBook.user.id)
+    }
+
+  })
 })
+
+function updateBookUser(userId) {
+
+  const detailURL = BOOK_URL + '/' + currentBookId
+
+  configObj = {
+    method: "PATCH",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({user_id: userId })
+  }
+
+  fetch(detailURL, configObj).then(r => r.json()).then(patchResult => {
+    console.log(patchResult)
+  })
+}
